@@ -2,5 +2,7 @@
   "name": "svelte",
   "version": "0.0.0",
   "private": true,
-  "dependencies": {}
+  "dependencies": {
+    "chess-sets": "^1.0.0"
+  }
 }
