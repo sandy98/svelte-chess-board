@@ -1,3 +1,4 @@
-# svelte-chess-board
+# Chess Board
 
-[Edit on StackBlitz ⚡️](https://stackblitz.com/edit/svelte-chess-board)
+## Powered by Svelte
+
