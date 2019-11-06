@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chessboard Test</title>
+    <script src="chess-board.js"></script>
+</head>
+<body>
+    <chess-board 
+      id="bd1" 
+      initialFen="rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR"
+      initialStatus="PLAY"
+    >
+    </chess-board>
+    
+    <script>
+        let board
+        setTimeout(() => {
+            board = document.getElementById('bd1')
+            console.log("Assigning to variable 'board'")
+        }, 50)
+        console.clear()
+    </script>
+</body>
+</html>
