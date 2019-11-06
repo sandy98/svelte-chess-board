@@ -1,8 +1,0 @@
-{
-  "name": "svelte-chess-board",
-  "version": "0.1.0",
-  "private": false,
-  "dependencies": {
-    "chess-sets": "^1.0.0"
-  }
-}
