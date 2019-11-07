@@ -11,7 +11,13 @@
 	<link rel='stylesheet' href='/chess-board.css'>
 
 	<script defer src='/chess-board.js'></script>
-	<chess-board initialDarkBg="#080" />
+	<chess-board id="bd1" />
+
+	<script>
+		var board;
+		setTimeout(() => board = document.querySelector('#bd1'), 0)
+		setTimeout(() => board.setStatus('config'), 10)
+	</script>
 </head>
 
 <body>

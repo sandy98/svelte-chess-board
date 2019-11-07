@@ -498,6 +498,8 @@
 	  return n
   }
   
+  export const version = require('../package.json').version
+
   $: gameTitle = game.title
 
   $: position = game.positions[__current < 0 ? 0 : __current]
@@ -859,9 +861,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
   onMount(() => {
-    console.log(`Board mounted with version: ${game.version}`)
-	setTimeout(() => window.board = document.querySelector('chess-board'), 0)
-	setTimeout(() => setStatus('config'), 0)
+    // console.log(`Board mounted with version: ${game.version}`)
+	// setTimeout(() => window.board = document.querySelector('chess-board'), 0)
+	// setTimeout(() => setStatus('config'), 0)
   })
 
 </script>
