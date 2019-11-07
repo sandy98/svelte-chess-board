@@ -15,8 +15,10 @@
 
 	<script>
 		var board;
-		setTimeout(() => board = document.querySelector('#bd1'), 0)
-		setTimeout(() => board.setStatus('config'), 10)
+		setTimeout(() => {
+			board = document.querySelector('#bd1')
+			board.setStatus('config')
+		}, 0)
 	</script>
 </head>
 

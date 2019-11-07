@@ -498,7 +498,7 @@
 	  return n
   }
   
-  export const version = require('../package.json').version
+  export const version = '0.14.7'
 
   $: gameTitle = game.title
 

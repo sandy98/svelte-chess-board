@@ -1,6 +1,6 @@
 {
   "name": "svelte-chess-board",
-  "version": "0.14.6",
+  "version": "0.14.7",
   "description": "Chess board with self-contained figure images compiled as a stand-alone web component using Svelte",
   "author": "Domingo E. Savoretti <esavoretti@gmail.com>",
   "repository": "https://github.com/sandy98/svelte-chess-board",
