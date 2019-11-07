@@ -45,7 +45,11 @@
 	  {/each}
 	</div>
   </div>
-  <div class="board-child board-panel" style="color: {__darkBg}; background: beige;">
+  <div 
+    class="board-child board-panel" 
+	style="color: {__darkBg}; background: beige;"
+	on:contextmenu="{contextMenu}"
+  >
     <div 
 	  class="board-panel-child"
 	  style="display: {__status === 'PLAY' || __status === 'VIEW' || __status === 'ANALYZE' ? 'flex' : 'none'};"
@@ -94,16 +98,66 @@
 	<div 
 	  class="board-panel-child"
 	  style="display: {__status === 'SETUP' ? 'flex' : 'none'};"
-
 	>
-	  <h2 style="padding: 5px;"> Setup</h2>
+	  <h3 style="padding: 5px;"> Setup</h3>
 	</div>
 	<div 
 	  class="board-panel-child"
 	  style="display: {__status === 'CONFIG' ? 'flex' : 'none'};"
-
 	>
-	  <h2 style="padding: 5px;"> Config</h2>
+	  <h3 class="pad5" style="text-align: center; border-bottom: solid 1px silver;">
+	    Appearance
+	  </h3>
+	  <div class="line">
+	    <div><label class="pad5">Backgrounds</label></div>
+		<div><select on:change="{ev => setBackgrounds(ev.target.value)}">
+		  {#each backgrounds as bg}
+		    <option selected="{__darkBg === bg.dark}" value="{bg.name}">{bg.name}</option>
+		  {/each}
+		</select></div>
+	  </div>
+	  <div class="line">
+		<div><label class="pad5">Figure set</label></div>
+		<div><select on:change="{ev => setFigureSet(ev.target.value)}">
+		  {#each figureSets as s}
+		    <option selected="{__set === s}" value="{s}">{utils.capitalize(s)}</option>
+		  {/each}
+		</select></div>
+	  </div>
+	  <hr/>
+	  <h3 class="pad5" style="text-align: center; border-bottom: solid 1px silver;">
+	    Options
+	  </h3>
+	  <div class="line">
+		<div><label class="pad5">Human Plays with</label></div>
+		<div>
+		   <img 
+		     src="{sets[__set].K}"
+			 alt="white"
+			 style="cursor: pointer; background: {__human === 'w' ? __darkBg : __lightBg};"
+			 on:click="{() => setHuman('w')}"
+			 title="White"
+		   />
+		   <img 
+		     src="{sets[__set].k}"
+			 alt="black"
+			 style="cursor: pointer; background: {__human === 'b' ? __darkBg : __lightBg};"
+			 on:click="{() => setHuman('b')}"
+			 title="Black"
+		   />
+		</div>
+	  </div>
+	  <div class="line">
+		<div><label class="pad5">Automatic Promotion</label></div>
+		<div><select bind:value="{autoPromotion}">
+		     <option value="{false}" selected="{!autoPromotion}">None</option>
+		  {#each [{name: 'Queen', value: 'Q'}, {name: 'Knight', value: 'N'}, {name: 'Rook', value: 'R'}, {name: 'Bishop', value: 'B'}] as fig}
+		    <option selected="{autoPromotion === fig.value}" value="{fig.value}">{fig.name}</option>
+		  {/each}
+		</select></div>
+	  </div>
+
+
 	</div>
   </div>
 </div>
@@ -128,6 +182,10 @@
 	/* Handle on hover */
 	::-webkit-scrollbar-thumb:hover {
 	background: #888;
+	}
+
+	.pad5 {
+		padding: 5px;
 	}
 
 	.board-frame {
@@ -181,6 +239,19 @@
 
 	.row:nth-child(odd) {
 		background: cyan;
+	}
+
+	.line {
+		display: flex;
+		width: 95%;
+		min-width: 95%;
+		max-width: 95%;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding: 5px;
+		margin-bottom: 0;
+		font-size: 10pt;
 	}
 	
 	.square {
@@ -427,7 +498,6 @@
 	  return n
   }
   
-  export let gameTitle
   $: gameTitle = game.title
 
   $: position = game.positions[__current < 0 ? 0 : __current]
@@ -460,14 +530,17 @@
 
 
   export const backgrounds = [
+	  {name: 'Acqua', dark: '#56B6E2', light: '#DFDFDF'},
 	  {name: 'Blue', dark: '#6495ED', light: '#ADD8E6'},
 	  {name: 'Brown', dark: '#B58863', light: '#F0D9B5'},
-	  {name: 'Acqua', dark: '#56B6E2', light: '#DFDFDF'},
 	  {name: 'Green', dark: '#769656', light: 'beige'},
 	  {name: 'Maroon', dark: '#B2535B', light: '#FFF2D7'}
   ]
-  let __lightBg = backgrounds[0].light
-  let __darkBg = backgrounds[0].dark
+  export let initialLightBg
+  export let initialDarkBg
+
+  let __lightBg = initialLightBg || backgrounds[2].light
+  let __darkBg = initialDarkBg || backgrounds[2].dark
   export const getBackgrounds = () => ({light: __lightBg, dark: __darkBg})
   export const setBackgrounds = options => {
 	  switch (options.constructor.name) {
@@ -484,6 +557,7 @@
 			  if (options < 0 || options >= backgrounds.length) return false 
 			  __lightBg = backgrounds[options].light
 			  __darkBg = backgrounds[options].dark
+			  return true
 		  case 'Object':
 			  if (options.light && options.dark) {
 				  __lightBg = options.light
@@ -780,12 +854,14 @@
 	  return ret
   }
 
+  const contextMenu = ev => console.log('Context menu invoked.')
+
 ///////////////////////////////////////////////////////////////////////////////
 
   onMount(() => {
     console.log(`Board mounted with version: ${game.version}`)
-    // setStatus('PLAY')
 	setTimeout(() => window.board = document.querySelector('chess-board'), 0)
+	setTimeout(() => setStatus('config'), 0)
   })
 
 </script>
