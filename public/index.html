@@ -15,10 +15,20 @@
 
 	<script>
 		var board;
-		setTimeout(() => {
+		var tries = 0;
+		var init = () => {
+			console.clear()
+			console.log('Trying to get a reference to board, attempt Nº ', ++tries)
 			board = document.querySelector('#bd1')
-			board.setStatus('config')
-		}, 0)
+			if (board && board.setStatus && board.setStatus.constructor.name === 'Function') {
+				board.setStatus('setup')
+				console.log('Done!')
+			} else {
+				setTimeout(init, 100)
+			}
+		}
+
+		setTimeout(init, 100)
 	</script>
 </head>
 

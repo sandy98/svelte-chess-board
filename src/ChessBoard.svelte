@@ -7,13 +7,13 @@
 		  <div
 		    class="square"
 			data-index="{currentRows[y][x]}"
-			title="{utils.sq2san(currentRows[y][x])}"
+			title="{__status !== 'SETUP' ? '' : utils.sq2san(currentRows[y][x])}"
 			style="background: {currentRows[y][x] === __sqFrom ? 'lightgreen' : utils.isDarkSquare(currentRows[y][x]) ? __darkBg : __lightBg};"
 			on:dragover|preventDefault
     		on:click="{e => handleInput(e, currentRows[y][x])}" 
     		on:drop="{e => handleInput(e, currentRows[y][x])}" 
 		  >
-		    {#if (position[currentRows[y][x]] !== '0')}
+		    {#if ((position[currentRows[y][x]] !== '0') && __status)}
 				<img 
 				  src={ sets[__set][position[currentRows[y][x]]] } 
 				  alt="{position[currentRows[y][x]]}"
@@ -99,7 +99,76 @@
 	  class="board-panel-child"
 	  style="display: {__status === 'SETUP' ? 'flex' : 'none'};"
 	>
-	  <h3 style="padding: 5px;"> Setup</h3>
+	  {#if __status === 'SETUP'}
+	  <h3 style="padding: 5px;"> Setup Position</h3>
+	  <div class="line">
+	    <div><label class="pad5">Castling Permissions</label></div>
+		<div>
+			{#each ['K', 'Q', 'k', 'q'] as fig}
+			<img 
+				src="{sets[__set][fig]}" 
+				alt="{fig}"
+				style="cursor: pointer; background: {game.castling.indexOf(fig) !== -1 ? __darkBg : __lightBg};"
+				on:click="{() => setCastling(fig)}"
+			>
+			{/each}
+		</div>
+	  </div>
+	  <div class="line">
+	    <div><label class="pad5">Side to move</label></div>
+		<div>
+			{#each [{figure: 'P', side: 'w'}, {figure: 'p', side: 'b'}] as fig}
+			<img 
+				src="{sets[__set][fig.figure]}" 
+				alt="{fig.side.toUpperCase()}"
+				style="cursor: pointer; background: {turn === fig.side ? __darkBg : __lightBg};"
+				on:click="{() => setTurn(fig.side)}"
+			>
+			{/each}
+		</div>
+	  </div>
+	  <div class="line">
+	    <button
+			on:click="{() => {
+				utils.range(0, 63).forEach(n => game.put(n, '0'))
+				refresh()
+			}}"
+		>
+		  Empty board
+		</button>
+	    <button
+			on:click="{() => {
+				utils.defaultFenArray.forEach((v,n) => game.put(n, v))
+				refresh()
+			}}"
+		>
+		  Default position
+		</button>
+	  </div>
+	  <div class="line">
+	    <button
+		  on:click="{() => {
+			  game.fen = fenCopy
+			  setStatus('analyze')
+			  refresh()
+		  }}"
+		>
+		  Cancel
+		</button>
+	    <button
+		  on:click="{() => {
+			  if (utils.validateFen(game.fen).valid) { 
+			  setStatus('analyze')
+			  refresh()
+			  } else {
+				  alert("Current position is not valid.")
+			  }
+		  }}"
+		>
+		  Done
+		</button>
+	  </div>
+	  {/if}
 	</div>
 	<div 
 	  class="board-panel-child"
@@ -124,7 +193,12 @@
 		  {/each}
 		</select></div>
 	  </div>
-	  <hr/>
+	  <div class="line">
+	    <div><label for="chkFlipped" class="pad5">Board flipped</label></div>
+		<div>
+			<input style="cursor: pointer;" name="chkFlipped" type="checkbox" bind:checked="{__flipped}" />
+		</div>
+	  </div>
 	  <h3 class="pad5" style="text-align: center; border-bottom: solid 1px silver;">
 	    Options
 	  </h3>
@@ -156,8 +230,6 @@
 		  {/each}
 		</select></div>
 	  </div>
-
-
 	</div>
   </div>
 </div>
@@ -441,25 +513,33 @@
 
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
   export let initialStatus = 'ANALYZE'
-  let __status = initialStatus
+  export let __status = initialStatus
   export const getStatus = () => __status
   export const setStatus = newState => {
+	  if (!newState) newState = 'ANALYZE'
 	  switch (newState.constructor.name) {
 		  case 'String':
 			  newState = newState.toUpperCase()
 			  const found = states.find(s => s === newState)
 			  __status = found ? found : __status
 			  if (found) refresh()
+			  if (__status === 'SETUP' && found) fenCopy = game.fen
 			  return !!found
 		  case "Number":
 			  if (newState < 0 || newState >= states.length) return false
 			  __status = states[newState]
 			  refresh()
+			  if (__status === 'SETUP') fenCopy = game.fen
 			  return true
 		  default: 
 		    return false
 	  }
   }
+  export const setup = () => setStatus('setup')
+  export const config = () => setStatus('config')
+  export const analyze = () => setStatus('analyze')
+  export const view = () => setStatus('view')
+  export const play = () => setStatus('play')
 
   export let humanSide = 'w'
   let __human = humanSide
@@ -486,7 +566,7 @@
   export const getFlipped = () => __flipped
   export const flip = () => __flipped = !__flipped
 
-  let __current = 0
+  export let __current = 0
   export const getCurrent = () => __current
   export const goto = n => {
 	  if (__status !== 'ANALYZE' && __status !== 'VIEW') return -1
@@ -573,6 +653,9 @@
   	}
   }
   
+  export let castling
+  $: castling = game.getCastling(__current >= 0 ? __current : 0)
+
   $: promotionBg = utils.isDarkSquare(__sqTo || 0) ? __darkBg : __lightBg
 
   $: promotionSet = __figureFrom === 'P' ? ['Q', 'N', 'R', 'B'] : ['q', 'n', 'r', 'b']
@@ -627,8 +710,14 @@
   
   export const refresh = () => {
 	// Refreshes by dobuble flipping  
-	setTimeout(() => flip(), 50)
-	setTimeout(() => flip(), 60)
+	//setTimeout(() => flip(), 50)
+	//setTimeout(() => flip(), 60)
+
+	// ... but is better to move current pointer
+	const curcur = __current
+	setTimeout(() => __current = -1, 10)
+	setTimeout(() => __current = curcur, 20)
+	return curcur
   }
   
 
@@ -729,6 +818,9 @@
 	  return response
   }
 
+  export let now
+  $: now = (() => Date.now())()
+
   export const getHistory = (n = 0) => game.numbered_history()
   $: history = getHistory(__current)
 
@@ -736,8 +828,8 @@
   $: result = getResult(__current)
 
   export let turn
-  export const getTurn = (n = 0) => game.turn
-  $: turn = getTurn(__current)
+  
+  $: turn = game.getTurn(__current)
 
   export const canMoveFrom = sq => {
 	if (__current !== game.history().length) {
@@ -857,6 +949,65 @@
   }
 
   const contextMenu = ev => console.log('Context menu invoked.')
+
+  export const getCastlingIndex = fig => {
+	  switch (fig) {
+		  case 'K':
+			  return 0
+		  case 'Q':
+			  return 1
+		  case 'k':
+			  return 2
+		  case 'q':
+			  return 3
+		  default:
+			  return -1
+	  }
+  }
+
+    /*
+	export const put = (sq, figure) => {
+		if (!/[0pnbrqkPNBRQK]/.test(figure)) return null
+		sq = utils.sqNumber(sq)
+		const obj = fen2obj(fenCopy)
+		obj.fenArray[sq] = figure
+		obj.fenString = utils.array2fenString(obj.fenArray)
+		fenCopy = obj2fen(obj)
+	}
+	*/
+
+
+  export let fenCopy = utils.defaultFen
+
+  export const setTurn = t => {
+	  let obj = utils.fen2obj(game.fen)
+	  obj.turn = t
+	  game.fen = utils.obj2fen(obj)
+	  refresh()
+  }
+
+  export const setCastling = fig => {
+	  let obj = utils.fen2obj(game.fen)
+	  const ccastling = obj.castling
+	  let currCastling = [
+		  ccastling.indexOf('K') !== -1 ? 'K' : '-',
+		  ccastling.indexOf('Q') !== -1 ? 'Q' : '-',
+		  ccastling.indexOf('k') !== -1 ? 'k' : '-',
+		  ccastling.indexOf('q') !== -1 ? 'q' : '-',
+	  ]
+	  const index = currCastling.findIndex(f => f === fig)
+	  if (index !== -1) {
+		  currCastling[index] = '-'
+	  } else {
+		  currCastling[getCastlingIndex(fig)] = fig
+	  }
+
+	  let newCastling = currCastling.filter(x => x !== '-').join('')
+	  newCastling = newCastling.length ? newCastling : '-'
+	  obj.castling = newCastling
+	  game.fen = utils.obj2fen(obj)
+	  refresh()
+  }
 
 ///////////////////////////////////////////////////////////////////////////////
 
