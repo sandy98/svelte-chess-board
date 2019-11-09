@@ -1,5 +1,9 @@
 <svelte:options tag="chess-board"/>
-<div class="board-frame" on:keypress="{e => console.log(e.keycode)}">
+<div 
+  class="board-frame" 
+  on:keypress="{e => console.log(e.keycode)}"
+  on:dragover|preventDefault
+>
   <div class="board-child board" on:dblclick="{flip}" bind:this="{boardElement}">
     {#each currentRows as row, y (y)}
 	  <div class="row">
@@ -11,7 +15,7 @@
 			style="background: {currentRows[y][x] === __sqFrom ? 'lightgreen' : utils.isDarkSquare(currentRows[y][x]) ? __darkBg : __lightBg};"
 			on:dragover|preventDefault
     		on:click="{e => handleInput(e, currentRows[y][x])}" 
-    		on:drop="{e => handleInput(e, currentRows[y][x])}" 
+    		on:drop|stopPropagation="{e => handleInput(e, currentRows[y][x])}" 
 		  >
 		    {#if ((position[currentRows[y][x]] !== '0') && __status)}
 				<img 
@@ -19,8 +23,8 @@
 				  alt="{position[currentRows[y][x]]}"
 				  width="{`${sets[__set].size}%`}" 
 				  height="{`${sets[__set].size}%`}"
-				  style="cursor: {canMoveFrom(currentRows[y][x]) && turn ? 'pointer' : 'not-allowed'};"
-				  draggable={canMoveFrom(currentRows[y][x]) && turn}
+				  style="cursor: {canMoveFrom(currentRows[y][x]) && (__current + 2) ? 'pointer' : 'not-allowed'};"
+				  draggable={canMoveFrom(currentRows[y][x]) && (__current + 2)}
 				  on:dragstart="{e => handleDragStart(e, currentRows[y][x])}" 
 				/>
 			{/if}
@@ -49,6 +53,15 @@
     class="board-child board-panel" 
 	style="color: {__darkBg}; background: beige;"
 	on:contextmenu="{contextMenu}"
+	on:dragover|preventDefault
+	on:drop|stopPropagation="{ev => {
+			  __sqFrom = -1
+			  __sqTo = -1
+			  __figureFrom = null
+			  __figureTo = null
+			  __imgSrc ? __imgSrc.style.opacity = 1 : null
+			  __imgSrc = null
+	}}"
   >
     <div 
 	  class="board-panel-child"
@@ -100,7 +113,15 @@
 	  style="display: {__status === 'SETUP' ? 'flex' : 'none'};"
 	>
 	  {#if __status === 'SETUP'}
-	  <h3 style="padding: 5px;"> Setup Position</h3>
+	  <div style="font-weight: bold; padding-left: 5px; border-bottom: 1px solid silver;"> Setup Position</div>
+	  <div class="line">
+	    <span style="margin-right: 2px;">FEN</span>
+		<span  
+		  style="border: solid 1px; padding: 2px; background: white; color: {__darkBg}; font-size: 8.5px; font-weight: bold;"
+		>
+		  {`${utils.fen2obj(game.fens()[__current >= 0 ? __current : 0]).fenString} ${game.getTurn(__current)} ${game.getCastling(__current)} ${game.getEnPassant(__current)} ${game.getHalfMoveClock(__current)} ${game.getFullMoveNumber(__current)}`}
+		</span>
+	  </div>
 	  <div class="line">
 	    <div><label class="pad5">Castling Permissions</label></div>
 		<div>
@@ -110,6 +131,8 @@
 				alt="{fig}"
 				style="cursor: pointer; background: {game.castling.indexOf(fig) !== -1 ? __darkBg : __lightBg};"
 				on:click="{() => setCastling(fig)}"
+				width="30px"
+				height="30px"
 			>
 			{/each}
 		</div>
@@ -123,6 +146,8 @@
 				alt="{fig.side.toUpperCase()}"
 				style="cursor: pointer; background: {turn === fig.side ? __darkBg : __lightBg};"
 				on:click="{() => setTurn(fig.side)}"
+				height="30px"
+				width="30px"
 			>
 			{/each}
 		</div>
@@ -146,6 +171,79 @@
 		</button>
 	  </div>
 	  <div class="line">
+	    <div><label class="pad5">Discard figure</label></div>
+		<div
+		  style="width: 32px; height: 32px; border: solid 2px silver; cursor: pointer;"
+		  on:dragover|preventDefault
+		  on:drop|stopPropagation="{ev => {
+			  game.put(__sqFrom, '0')
+			  __sqFrom = -1
+			  __sqTo = -1
+			  __figureFrom = null
+			  __figureTo = null
+			  __imgSrc = null
+			  refresh()
+		  }}"
+		  on:click|stopPropagation="{ev => {
+			  if (__sqFrom < 0) return
+			  game.put(__sqFrom, '0')
+			  __sqFrom = -1
+			  __sqTo = -1
+			  __figureFrom = null
+			  __figureTo = null
+			  __imgSrc = null
+			  refresh()
+		  }}"
+		>
+		  <img
+		    src="{trashbin}"
+			alt="Trashbin"
+			width="30px"
+			height="30px"
+			style="background: {__darkBg};"
+		  />
+		</div>
+	  </div>
+	  <div class="line">
+	    <div><label class="pad5">Add figure</label></div>
+		<div
+		  style="display: flex; flex-direction: column; width: 120px; min-width: 120px; max-width: 120px; height: 40px; min-height: 40px; max-height: 40px; border: solid 1px silver;"
+		>
+		  <div
+		  	style="width: 100%; height: 50%; background: red;"
+		  >
+		    {#each utils.range(0, 5) as i}
+			  <img
+			  	draggable="{true}"
+				src="{sets[__set][setupImgs[i].figure]}"
+				alt="{setupImgs[i].figure}"
+				style="background: {__lightBg}; cursor: pointer;"
+				width="20px"
+				height="20px"
+				on:click={e => handleInput(e, setupImgs[i].index)}
+				on:dragstart={e => handleDragStart(e, setupImgs[i].index)}
+			  />
+			{/each}
+		  </div>
+		  <div
+		  	style="width: 100%; height: 50%; background: steelblue;"
+		  >
+		    {#each utils.range(6, 11) as i}
+			  <img
+			  	draggable="{true}"
+				src="{sets[__set][setupImgs[i].figure]}"
+				alt="{setupImgs[i].figure}"
+				style="background: {__darkBg}; cursor: pointer;"
+				width="20px"
+				height="20px"
+				on:click={e => handleInput(e, setupImgs[i].index)}
+				on:dragstart={e => handleDragStart(e, setupImgs[i].index)}
+			  />
+			{/each}
+		  </div>
+		</div>
+	  </div>
+	  <div class="line">
 	    <button
 		  on:click="{() => {
 			  game.fen = fenCopy
@@ -157,11 +255,12 @@
 		</button>
 	    <button
 		  on:click="{() => {
-			  if (utils.validateFen(game.fen).valid) { 
+			  const validFen = utils.validateFen(game.fen)
+			  if (validFen.valid) { 
 			  setStatus('analyze')
 			  refresh()
 			  } else {
-				  alert("Current position is not valid.")
+				  alert(`Current position is not valid.\n${validFen.message}`)
 			  }
 		  }}"
 		>
@@ -500,7 +599,10 @@
   import { onMount } from 'svelte'
   import Chess from 'chess-functions/dist/chess-functions.esm'
   import sets from 'chess-sets'
-  
+  import { trashbin } from '../assets/trashbin.json'
+
+  const DEBUG = true
+
   export const utils = Chess.utils()
  
   export let initialFen = Chess.defaultFen()
@@ -578,7 +680,7 @@
 	  return n
   }
   
-  export const version = '0.14.7'
+  export const version = '0.15.1'
 
   $: gameTitle = game.title
 
@@ -832,12 +934,12 @@
   $: turn = game.getTurn(__current)
 
   export const canMoveFrom = sq => {
-	if (__current !== game.history().length) {
-		// console.log('Not at final position')
+	if (utils.isEmptyFigure(game.position[sq])) {
 		return false
 	}
 
-	if (utils.isEmptyFigure(game.position[sq])) {
+	if (__current !== game.history().length) {
+		// console.log('Not at final position')
 		return false
 	}
 
@@ -878,29 +980,45 @@
   export let __sqTo = -1
   export let __promotion = null
 
+  const setupImgs = [
+	  {figure: 'p', index: -10},
+	  {figure: 'n', index: -20},
+	  {figure: 'b', index: -30},
+	  {figure: 'r', index: -40},
+	  {figure: 'q', index: -50},
+	  {figure: 'k', index: -60},
+	  {figure: 'P', index: -110},
+	  {figure: 'N', index: -120},
+	  {figure: 'B', index: -130},
+	  {figure: 'R', index: -140},
+	  {figure: 'Q', index: -150},
+	  {figure: 'K', index: -160},
+  ]
+
+
   const handleDragStart = (ev, sq)	=> {
 	  __imgSrc = ev.target
-	  ev.target.style.opacity = 0.1
-	//  if (navigator.userAgent.match(/Firefox|Edge/)) {
-      //console.log(navigator.userAgent)
-	  let img = new Image()
-	  img.style.opacity = 1
-	  //let img = document.createElement('img')
-	  let width = ev.target.parentElement.clientWidth
-	  let distance = width / 2
-	  img.src = ev.target.src
-	  let canvas = document.createElement("canvas")
-	  let ctx = canvas.getContext("2d")
-	  ctx.canvas.width = width
-	  ctx.canvas.height = width
-	  ctx.drawImage(img, 0, 0, width, width)
-	  img.src = canvas.toDataURL()
-	  if (ev.dataTransfer.setDragImage) {
-		ev.dataTransfer.setDragImage(img, distance, distance)
-	  } else if (ev.dataTransfer.addElement) {
-		ev.dataTransfer.addElement(img)  
-	  }
-//    }
+	  if(sq >= 0) ev.target.style.opacity = 0.1
+	  if (navigator.userAgent.match(/Firefox|Edge/)) {
+		//console.log(navigator.userAgent)
+		let img = new Image()
+		img.style.opacity = 1
+		//let img = document.createElement('img')
+		let width = ev.target.parentElement.clientWidth
+		let distance = width / 2
+		img.src = ev.target.src
+		let canvas = document.createElement("canvas")
+		let ctx = canvas.getContext("2d")
+		ctx.canvas.width = width
+		ctx.canvas.height = width
+		ctx.drawImage(img, 0, 0, width, width)
+		img.src = canvas.toDataURL()
+		if (ev.dataTransfer.setDragImage) {
+			ev.dataTransfer.setDragImage(img, distance, distance)
+		} else if (ev.dataTransfer.addElement) {
+			ev.dataTransfer.addElement(img)  
+		}
+      }
 	  handleInput(ev, sq)
   }
 
@@ -908,7 +1026,7 @@
 	  if (__sqFrom === -1) {
 		  if (canMoveFrom(sq)) {
 			  __sqFrom = sq
-			  __figureFrom = game.position[sq]
+			  __figureFrom = sq >= 0 ? game.position[sq] : setupImgs.find(i => i.index === sq).figure
 			  //console.log('Assigned sqFrom to ' + __sqFrom)
 			  return true
 		  } else {
@@ -933,7 +1051,18 @@
 			  __sqTo = sq
 			  __figureTo = game.position[sq]
 			  //console.log(`Movimiento intentado: ${__sqFrom} a ${__sqTo}`)
-			  try_move(__sqFrom, __sqTo)
+			  if (__status !== 'SETUP') {
+				  try_move(__sqFrom, __sqTo)
+			  } else {
+				  game.put(__sqFrom, '0')
+				  game.put(__sqTo, __figureFrom)
+				__sqFrom = -1
+				__sqTo = -1
+				__figureFrom = null
+				__figureTo = null
+				__imgSrc = null
+				refresh()
+			  }
 		  }
 	  }
   }
@@ -1014,7 +1143,19 @@
   onMount(() => {
     // console.log(`Board mounted with version: ${game.version}`)
 	// setTimeout(() => window.board = document.querySelector('chess-board'), 0)
-	// setTimeout(() => setStatus('config'), 0)
+    // setTimeout(() => setStatus('config'), 0)
+    // console.log(trashbin)
+   document.body.addEventListener('dragover', e => e.preventDefault()) 
+   document.body.addEventListener('drop', 
+     e => {
+		DEBUG && console.log("Dropping out of the board!!")
+		__sqFrom = -1
+		__sqTo = -1
+		__figureFrom = null
+		__figureTo = null
+		__imgSrc ? __imgSrc.style.opacity = 1 : null
+		__imgSrc = null
+  	})
   })
 
 </script>

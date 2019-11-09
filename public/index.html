@@ -11,7 +11,20 @@
 	<link rel='stylesheet' href='/chess-board.css'>
 
 	<script defer src='/chess-board.js'></script>
-	<chess-board id="bd1" />
+	<h3 style="color: steelblue; text-align: center;">Svelte Chess Board</h3>
+	<p style="margin-left: 2rem; color: silver;">
+		<span>Version</span>&nbsp;&nbsp;&nbsp;<span id="version"></span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<button id="btnAnalyze" onclick="board.analyze()">Play!</button>
+		&nbsp;
+		<button id="btnConfig" onclick="board.config()">Configure Board</button>
+		&nbsp;
+		<button id="btnSetup" onclick="board.setup()">Setup Board</button>
+		&nbsp;
+	</p>
+	<div style="display: flex; flex-direction: column; width: 100%; min-width: 100%; padding: 5px; align-items: center;">
+		<chess-board id="bd1"/>
+	</div>
 
 	<script>
 		var board;
@@ -21,7 +34,8 @@
 			console.log('Trying to get a reference to board, attempt Nº ', ++tries)
 			board = document.querySelector('#bd1')
 			if (board && board.setStatus && board.setStatus.constructor.name === 'Function') {
-				board.setStatus('setup')
+				//board.setStatus('setup')
+				document.querySelector('#version').innerHTML = board.version
 				console.log('Done!')
 			} else {
 				setTimeout(init, 100)
