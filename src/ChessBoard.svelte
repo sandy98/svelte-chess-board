@@ -461,7 +461,7 @@
 		max-width: 100%;
 		min-width: 100%;
 		height: 10%;
-		max-height: 10%;
+		max-height: 20%;
 		min-height: 10%;
 		border-bottom: solid 1px silver;
 	}
