@@ -70,7 +70,7 @@
 	  <div class="headers" style="color: {__darkBg};">
 	    <div class="header-row">
 			<span style="color: {__lightBg}; background: {__darkBg}; padding: 4px; border-radius: 4px;">
-			  {`${game.headers('White')} - ${game.headers('Black')}`}
+			  {`${white} - ${black}`}
 			</span>
 			<span style="color: {__lightBg}; background: {__darkBg}; padding: 4px; border-radius: 4px;">
 			  {result}
@@ -661,6 +661,13 @@
   const flipped_arr = xor_arr(rows, 7)
   const unflipped_arr = xor_arr(rows, 56)
 
+  const getWhite = (n = __current) => game.headers('White')
+  $: white = getWhite(__current)
+
+  const getBlack = (n = __current) => game.headers('Black')
+  $: black = getBlack(__current)
+
+
   $: currentRows = __flipped ? flipped_arr : unflipped_arr
   export const getCurrentRows = () => currentRows
 
@@ -723,8 +730,8 @@
   export let initialLightBg
   export let initialDarkBg
 
-  let __lightBg = initialLightBg || backgrounds[2].light
-  let __darkBg = initialDarkBg || backgrounds[2].dark
+  let __lightBg = initialLightBg || backgrounds[1].light
+  let __darkBg = initialDarkBg || backgrounds[1].dark
   export const getBackgrounds = () => ({light: __lightBg, dark: __darkBg})
   export const setBackgrounds = options => {
 	  switch (options.constructor.name) {
@@ -815,11 +822,15 @@
 	//setTimeout(() => flip(), 50)
 	//setTimeout(() => flip(), 60)
 
+	// __current = __current + 0
+	// return __current
+
 	// ... but is better to move current pointer
-	const curcur = __current
-	setTimeout(() => __current = -1, 10)
-	setTimeout(() => __current = curcur, 20)
-	return curcur
+	 const curcur = __current
+	 setTimeout(() => __current = -1, 10)
+	 setTimeout(() => __current = curcur, 15)
+	 return curcur
+
   }
   
 
