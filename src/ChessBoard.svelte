@@ -483,9 +483,9 @@
 		width: 95%;
 		max-width: 95%;
 		min-width: 95%;
-		height: 80%;
-		max-height: 80%;
-		min-height: 80%;
+		height: 70%;
+		max-height: 70%;
+		min-height: 70%;
 		overflow-y: auto;
 		font-family: monospace;
 		font-size: 10pt;
