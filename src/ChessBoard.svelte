@@ -460,9 +460,9 @@
 		width: 100%;
 		max-width: 100%;
 		min-width: 100%;
-		height: 10%;
-		max-height: 20%;
-		min-height: 10%;
+		height: 20%;
+		max-height: 30%;
+		min-height: 20%;
 		border-bottom: solid 1px silver;
 	}
 
