@@ -42,7 +42,7 @@
 				board.addEventListener('update', e => console.log('Board updated.'))
 				console.log('Done!')
 			} else {
-				setTimeout(init, 100)
+				if (tries < 100) setTimeout(init, 100)
 			}
 		}
 
