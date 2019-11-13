@@ -11,6 +11,9 @@
 	<link rel='stylesheet' href='/chess-board.css'>
 
 	<script defer src='/chess-board.js'></script>
+</head>
+
+<body>
 	<h3 style="color: steelblue; text-align: center;">Svelte Chess Board</h3>
 	<p style="margin-left: 2rem; color: silver;">
 		<span>Version</span>&nbsp;&nbsp;&nbsp;<span id="version"></span>
@@ -23,7 +26,7 @@
 		&nbsp;
 	</p>
 	<div style="display: flex; flex-direction: column; width: 100%; min-width: 100%; padding: 5px; align-items: center;">
-		<chess-board id="bd1"/>
+		<chess-board id="bd1" onupdete="console.log('UPDATED');"/>
 	</div>
 
 	<script>
@@ -36,6 +39,7 @@
 			if (board && board.setStatus && board.setStatus.constructor.name === 'Function') {
 				//board.setStatus('setup')
 				document.querySelector('#version').innerHTML = board.version
+				board.addEventListener('update', e => console.log('Board updated.'))
 				console.log('Done!')
 			} else {
 				setTimeout(init, 100)
@@ -44,8 +48,5 @@
 
 		setTimeout(init, 100)
 	</script>
-</head>
-
-<body>
 </body>
 </html>

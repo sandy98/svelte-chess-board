@@ -1,6 +1,6 @@
 {
   "name": "svelte-chess-board",
-  "version": "0.15.10",
+  "version": "0.15.11",
   "description": "Chess board with self-contained figure images compiled as a stand-alone web component using Svelte",
   "author": "Domingo E. Savoretti <esavoretti@gmail.com>",
   "repository": "https://github.com/sandy98/svelte-chess-board",
@@ -13,17 +13,17 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-svelte": "^5.1.1",
     "rollup-plugin-terser": "^5.1.2",
-    "svelte": "^3.14.0"
+    "svelte": "^3.14.1"
   },
   "license": "MIT",
   "dependencies": {
-    "chess-functions": "^0.15.10",
+    "chess-functions": "latest",
     "chess-sets": "^1.0.0",
     "sirv-cli": "^0.4.4"
   },
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
+    "build": "scripts/update-version && rollup -c",
+    "dev": "scripts/update-version && rollup -c -w",
     "start": "sirv public --single",
     "start:dev": "sirv public --single --dev"
   }

@@ -207,7 +207,7 @@
 	  <div class="line">
 	    <div><label class="pad5">Add figure</label></div>
 		<div
-		  style="display: flex; flex-direction: column; width: 120px; min-width: 120px; max-width: 120px; height: 40px; min-height: 40px; max-height: 40px; border: solid 1px silver;"
+		  style="display: flex; flex-direction: column; width: 180px; min-width: 180px; max-width: 180px; height: 40px; min-height: 60px; max-height: 60px; border: solid 1px silver;"
 		>
 		  <div
 		  	style="width: 100%; height: 50%; background: red;"
@@ -218,8 +218,8 @@
 				src="{sets[__set][setupImgs[i].figure]}"
 				alt="{setupImgs[i].figure}"
 				style="background: {__lightBg}; cursor: pointer;"
-				width="20px"
-				height="20px"
+				width="30px"
+				height="30px"
 				on:click={e => handleInput(e, setupImgs[i].index)}
 				on:dragstart={e => handleDragStart(e, setupImgs[i].index)}
 			  />
@@ -234,8 +234,8 @@
 				src="{sets[__set][setupImgs[i].figure]}"
 				alt="{setupImgs[i].figure}"
 				style="background: {__darkBg}; cursor: pointer;"
-				width="20px"
-				height="20px"
+				width="30px"
+				height="30px"
 				on:click={e => handleInput(e, setupImgs[i].index)}
 				on:dragstart={e => handleDragStart(e, setupImgs[i].index)}
 			  />
@@ -259,6 +259,7 @@
 			  if (validFen.valid) { 
 			  setStatus('analyze')
 			  refresh()
+		      dispatch('update')
 			  } else {
 				  alert(`Current position is not valid.\n${validFen.message}`)
 			  }
@@ -504,7 +505,8 @@
 	}
 
 	.san:hover {
-		opacity: 0.5;
+	  /* opacity: 0.5; */
+	  text-shadow: 4px 4px 4px;
 	}
 
 	.promotion-panel {
@@ -596,7 +598,7 @@
 </style>
 
 <script>
-  import { onMount } from 'svelte'
+  import { onMount, afterUpdate, createEventDispatcher } from 'svelte'
   import Chess from 'chess-functions/dist/chess-functions.esm'
   import sets from 'chess-sets'
   import { trashbin } from '../assets/trashbin.json'
@@ -611,6 +613,8 @@
 
   export let autoPromotion = false
 
+  const dispatch = createEventDispatcher()
+  
   let __isPromoting = false
 
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
@@ -673,7 +677,10 @@
 
   let __flipped = false
   export const getFlipped = () => __flipped
-  export const flip = () => __flipped = !__flipped
+  export const flip = () => {
+	  __flipped = !__flipped
+		dispatch('update')
+  }
 
   export let __current = 0
   export const getCurrent = () => __current
@@ -687,7 +694,7 @@
 	  return n
   }
   
-  export const version = '0.15.1'
+  export const version = '0.15.11'
 
   $: gameTitle = game.title
 
@@ -701,6 +708,7 @@
   export const setFigureSet = newSet => {
 	  if (typeof newSet === 'undefined') {
 		  __set = 'default'
+	      dispatch('update')
 		  return true
 	  } else {
 		switch (newSet.constructor.name) {
@@ -708,10 +716,12 @@
 				newSet = newSet.toLowerCase()
 				const found = figureSets.find(s => s === newSet)
 				__set = found ? found : __set
-				return !! found
+			    !!found && dispatch('update')
+				return !!found
 			case "Number":
 				if (newSet < 0 || newSet >= figureSets.length) return false
 				__set = figureSets[newSet]
+		        dispatch('update')
 				return true
 			default: 
 				return false
@@ -740,6 +750,7 @@
 			  if (bg) {
 				  __lightBg = bg.light
 				  __darkBg = bg.dark
+			      dispatch('update')
 				  return true
 			  } else {
 				  return false
@@ -748,11 +759,13 @@
 			  if (options < 0 || options >= backgrounds.length) return false 
 			  __lightBg = backgrounds[options].light
 			  __darkBg = backgrounds[options].dark
+		      dispatch('update')
 			  return true
 		  case 'Object':
 			  if (options.light && options.dark) {
 				  __lightBg = options.light
 				  __darkBg = options.dark
+			      dispatch('update')
 				  return true
 			  } else {
 				  return false
@@ -841,6 +854,7 @@
 		__current = game.history().length
 //		doubleFlip()
 		setTimeout(() => historyElement.scrollTop = historyElement.scrollHeight, 0)
+		dispatch('update')
 	}
 	return response
   }
@@ -882,6 +896,7 @@
 		__current = game.history().length
 		// doubleFlip()
 		setTimeout(() => historyElement.scrollTop = historyElement.scrollHeight, 0)
+		dispatch('update')
 	}
 
 	if (__imgSrc) {
