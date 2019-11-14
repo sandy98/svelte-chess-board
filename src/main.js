@@ -1,4 +1,4 @@
-// import ChessBoard from './ChessBoard.svelte';
+import ChessBoard from './ChessBoard.svelte';
 
 /* 
 const board = new ChessBoard({
@@ -9,10 +9,10 @@ const board = new ChessBoard({
 
 export default board; */
 
-// export default ChessBoard
+export default ChessBoard
 
 // export default {
 //	components: { ChessBoard }
 // }
 
-export {default as ChessBoard } from './ChessBoard.svelte'
+//export {default as ChessBoard } from './ChessBoard.svelte'
