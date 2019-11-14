@@ -694,7 +694,7 @@
 	  return n
   }
   
-  export const version = '0.15.13'
+  export const version = '0.15.14'
 
   $: gameTitle = game.title
 

@@ -9,4 +9,8 @@ const board = new ChessBoard({
 
 export default board; */
 
-export default ChessBoard
+// export default ChessBoard
+
+export default {
+	components: { ChessBoard }
+}

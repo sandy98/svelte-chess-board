@@ -9,8 +9,8 @@ import rollup_start_dev from './rollup_start_dev';
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-	// input: 'src/main.js',
-	input: 'src/ChessBoard.svelte',
+	input: 'src/main.js',
+	// input: 'src/ChessBoard.svelte',
 	output: {
 		sourcemap: true,
 		format: 'iife',
