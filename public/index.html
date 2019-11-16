@@ -18,7 +18,11 @@
 	<p style="margin-left: 2rem; color: silver;">
 		<span>Version</span>&nbsp;&nbsp;&nbsp;<span id="version"></span>
 		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-		<button id="btnAnalyze" onclick="board.analyze()">Play!</button>
+		<button id="btnAnalyze" onclick="board.analyze()">Play</button>
+		&nbsp;
+		<button id="btnReset" onclick="board.reset()">Reset</button>
+		&nbsp;
+		<button id="btnUndo" onclick="board.undo()">Undo Last Move</button>
 		&nbsp;
 		<button id="btnConfig" onclick="board.config()">Configure Board</button>
 		&nbsp;
@@ -30,22 +34,36 @@
 	</div>
 
 	<script>
-		var board;
+		var board, updev, check, checkmate, stalemate;
 		var tries = 0;
 		var init = () => {
 			console.clear()
 			console.log('Trying to get a reference to board, attempt Nº ', ++tries)
 			board = document.querySelector('#bd1')
-			if (board && board.setStatus && board.setStatus.constructor.name === 'Function') {
-				//board.setStatus('setup')
-				document.querySelector('#version').innerHTML = board.version
-				board.addEventListener('update', e => console.log('Board updated.'))
-				console.log('Done!')
-			} else {
-				if (tries < 100) setTimeout(init, 100)
+			try {
+			  if (board && board.setStatus && board.setStatus.constructor.name === 'Function') {
+			      //board.setStatus('setup')
+				  document.querySelector('#version').innerHTML = board.version
+				  board.addEventListener('update', e => console.log(`Chessboard updated at ${e.detail}`))
+				  updev = board.on('update', e => console.log(`RECEIVED 'UPDATE' EVENT FROM BOARD WITH DETAIL: ${e.detail}`))
+				  check = board.on('check', e => alert(`${e.detail === 'w' ? 'White' : 'Black'} is in check!`))
+				  checkmate = board.on('checkmate', e => alert(`Checkmate! ${e.detail}`))
+				  stalemate = board.on('stalemate', e => alert(`Stalemate! ${e.detail}`))
+				  board.on('in_threefold_repetition', e => alert(`3 repetitions: ${e.detail}`))
+				  board.on('in_fifty_moves_rule', e => alert(`50 moves rule: ${e.detail}`))
+				  board.on('insufficient_material', e => alert(`Insufficient material: ${e.detail}`))
+				  board.on('in_draw', e => alert(`Draw: ${e.detail}`))
+				  console.log(updev.toString())
+				  console.log(updev())
+				  console.log('Done!')
+			  } else {
+			 	  if (tries < 100) setTimeout(init, 100)
+			  }
+			}
+			catch(err) {
+				console.log(`ERROR en init: ${err.message}`)
 			}
 		}
-
 		setTimeout(init, 100)
 	</script>
 </body>

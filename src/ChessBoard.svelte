@@ -51,7 +51,7 @@
   </div>
   <div 
     class="board-child board-panel" 
-	style="color: {__darkBg}; background: beige;"
+	style="color: {__darkBg}; background: whitesmoke;"
 	on:contextmenu="{contextMenu}"
 	on:dragover|preventDefault
 	on:drop|stopPropagation="{ev => {
@@ -127,6 +127,7 @@
 		<div>
 			{#each ['K', 'Q', 'k', 'q'] as fig}
 			<img 
+			  	draggable="{false}"
 				src="{sets[__set][fig]}" 
 				alt="{fig}"
 				style="cursor: pointer; background: {game.castling.indexOf(fig) !== -1 ? __darkBg : __lightBg};"
@@ -142,6 +143,7 @@
 		<div>
 			{#each [{figure: 'P', side: 'w'}, {figure: 'p', side: 'b'}] as fig}
 			<img 
+			  	draggable="{false}"
 				src="{sets[__set][fig.figure]}" 
 				alt="{fig.side.toUpperCase()}"
 				style="cursor: pointer; background: {turn === fig.side ? __darkBg : __lightBg};"
@@ -196,6 +198,7 @@
 		  }}"
 		>
 		  <img
+		  	draggable="{false}"
 		    src="{trashbin}"
 			alt="Trashbin"
 			width="30px"
@@ -259,7 +262,7 @@
 			  if (validFen.valid) { 
 			  setStatus('analyze')
 			  refresh()
-		      dispatch('update')
+		      DEBUG && dispatch('update', Date.now())
 			  } else {
 				  alert(`Current position is not valid.\n${validFen.message}`)
 			  }
@@ -306,6 +309,7 @@
 		<div><label class="pad5">Human Plays with</label></div>
 		<div>
 		   <img 
+   		  	 draggable="{false}"
 		     src="{sets[__set].K}"
 			 alt="white"
 			 style="cursor: pointer; background: {__human === 'w' ? __darkBg : __lightBg};"
@@ -313,6 +317,7 @@
 			 title="White"
 		   />
 		   <img 
+		  	 draggable="{false}"
 		     src="{sets[__set].k}"
 			 alt="black"
 			 style="cursor: pointer; background: {__human === 'b' ? __darkBg : __lightBg};"
@@ -598,28 +603,71 @@
 </style>
 
 <script>
-  import { onMount, afterUpdate, createEventDispatcher } from 'svelte'
+  import { onMount, onDestroy, afterUpdate, createEventDispatcher } from 'svelte'
   import Chess from 'chess-functions/dist/chess-functions.esm'
   import sets from 'chess-sets'
   import { trashbin } from '../assets/trashbin.json'
 
-  const DEBUG = true
+  const DEBUG = false
 
+  export const version = '0.17.0'
   export const utils = Chess.utils()
- 
-  export let initialFen = Chess.defaultFen()
- 
-  export const game = new Chess(initialFen)	
+  export const game = new Chess()	
+  export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
+  export const backgrounds = [
+	  {name: 'Acqua', dark: '#56B6E2', light: '#DFDFDF'},
+	  {name: 'Blue', dark: '#6495ED', light: '#ADD8E6'},
+	  {name: 'Brown', dark: '#B58863', light: '#F0D9B5'},
+	  {name: 'Green', dark: '#769656', light: 'beige'},
+	  {name: 'Maroon', dark: '#B2535B', light: '#FFF2D7'}
+  ]
 
+  export let initialStatus = 'ANALYZE'
   export let autoPromotion = false
+  export let initialFen = Chess.defaultFen()
+  export let humanSide = 'w'
+  export let figureSets = []
+  for (let k in sets) figureSets = [...figureSets, k]
+
+  export let initialLightBg
+  export let initialDarkBg
+
 
   const dispatch = createEventDispatcher()
+  const xor_arr = (aoa, xorVal) => aoa.reduce((base, a) => [...base, a.map(v => v ^ xorVal)], [])
+  const rows = utils.partition(utils.chessboard, 8) 
+  const flipped_arr = xor_arr(rows, 7)
+  const unflipped_arr = xor_arr(rows, 56)
+
+  const getWhite = (n = __current) => game.headers('White')
+  $: white = getWhite(__current)
+
+  const getBlack = (n = __current) => game.headers('Black')
+  $: black = getBlack(__current)
+
   
   let __isPromoting = false
+  let __status = initialStatus
+  let __human = humanSide
+  let __flipped = false
+  let __current = 0
+  let __set = 'default'
+  let __lightBg = initialLightBg || backgrounds[1].light
+  let __darkBg = initialDarkBg || backgrounds[1].dark
+  let boardElement 
+  let historyElement
+  let panelElement
+  let __imgSrc = null	
+  let __figureFrom = null
+  let __figureTo = null	
+  let __sqFrom = -1
+  let __sqTo = -1
+  let __promotion = null
 
-  export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
-  export let initialStatus = 'ANALYZE'
-  export let __status = initialStatus
+
+
+  $: currentRows = __flipped ? flipped_arr : unflipped_arr
+  export const getCurrentRows = () => currentRows
   export const getStatus = () => __status
   export const setStatus = newState => {
 	  if (!newState) newState = 'ANALYZE'
@@ -647,8 +695,6 @@
   export const view = () => setStatus('view')
   export const play = () => setStatus('play')
 
-  export let humanSide = 'w'
-  let __human = humanSide
   export const getHuman = () => __human
   export const setHuman = h => {
 	  if (/[wb]/i.test(h)) {
@@ -660,29 +706,12 @@
 	  }
   }
 
-  const xor_arr = (aoa, xorVal) => aoa.reduce((base, a) => [...base, a.map(v => v ^ xorVal)], [])
-  const rows = utils.partition(utils.chessboard, 8) 
-  const flipped_arr = xor_arr(rows, 7)
-  const unflipped_arr = xor_arr(rows, 56)
-
-  const getWhite = (n = __current) => game.headers('White')
-  $: white = getWhite(__current)
-
-  const getBlack = (n = __current) => game.headers('Black')
-  $: black = getBlack(__current)
-
-
-  $: currentRows = __flipped ? flipped_arr : unflipped_arr
-  export const getCurrentRows = () => currentRows
-
-  let __flipped = false
   export const getFlipped = () => __flipped
   export const flip = () => {
 	  __flipped = !__flipped
-		dispatch('update')
+		DEBUG && dispatch('update', Date.now())
   }
 
-  export let __current = 0
   export const getCurrent = () => __current
   export const goto = n => {
 	  if (__status !== 'ANALYZE' && __status !== 'VIEW') return -1
@@ -694,21 +723,16 @@
 	  return n
   }
   
-  export const version = '0.16.0'
 
   $: gameTitle = game.title
-
   $: position = game.positions[__current < 0 ? 0 : __current]
   export const getPosition = () => position
 
-  export let figureSets = []
-  for (let k in sets) figureSets = [...figureSets, k]
-  let __set = 'default'
   export const getFigureSet = () => __set
   export const setFigureSet = newSet => {
 	  if (typeof newSet === 'undefined') {
 		  __set = 'default'
-	      dispatch('update')
+	      DEBUG && dispatch('update', Date.now())
 		  return true
 	  } else {
 		switch (newSet.constructor.name) {
@@ -716,12 +740,12 @@
 				newSet = newSet.toLowerCase()
 				const found = figureSets.find(s => s === newSet)
 				__set = found ? found : __set
-			    !!found && dispatch('update')
+			    !!found && DEBUG && dispatch('update', Date.now())
 				return !!found
 			case "Number":
 				if (newSet < 0 || newSet >= figureSets.length) return false
 				__set = figureSets[newSet]
-		        dispatch('update')
+		        DEBUG && dispatch('update', Date.now())
 				return true
 			default: 
 				return false
@@ -729,19 +753,6 @@
 	  }
   }
 
-
-  export const backgrounds = [
-	  {name: 'Acqua', dark: '#56B6E2', light: '#DFDFDF'},
-	  {name: 'Blue', dark: '#6495ED', light: '#ADD8E6'},
-	  {name: 'Brown', dark: '#B58863', light: '#F0D9B5'},
-	  {name: 'Green', dark: '#769656', light: 'beige'},
-	  {name: 'Maroon', dark: '#B2535B', light: '#FFF2D7'}
-  ]
-  export let initialLightBg
-  export let initialDarkBg
-
-  let __lightBg = initialLightBg || backgrounds[1].light
-  let __darkBg = initialDarkBg || backgrounds[1].dark
   export const getBackgrounds = () => ({light: __lightBg, dark: __darkBg})
   export const setBackgrounds = options => {
 	  switch (options.constructor.name) {
@@ -750,7 +761,7 @@
 			  if (bg) {
 				  __lightBg = bg.light
 				  __darkBg = bg.dark
-			      dispatch('update')
+			      DEBUG && dispatch('update', Date.now())
 				  return true
 			  } else {
 				  return false
@@ -759,13 +770,13 @@
 			  if (options < 0 || options >= backgrounds.length) return false 
 			  __lightBg = backgrounds[options].light
 			  __darkBg = backgrounds[options].dark
-		      dispatch('update')
+		      DEBUG && dispatch('update', Date.now())
 			  return true
 		  case 'Object':
 			  if (options.light && options.dark) {
 				  __lightBg = options.light
 				  __darkBg = options.dark
-			      dispatch('update')
+			      DEBUG && dispatch('update', Date.now())
 				  return true
 			  } else {
 				  return false
@@ -775,7 +786,6 @@
   	}
   }
   
-  export let castling
   $: castling = game.getCastling(__current >= 0 ? __current : 0)
 
   $: promotionBg = utils.isDarkSquare(__sqTo || 0) ? __darkBg : __lightBg
@@ -819,10 +829,6 @@
   const getPanelLeft = () => getPanelProp('offsetLeft')
   const getPanelTop = () => getPanelProp('offsetTop')
 
-  export let boardElement 
-  export let historyElement
-  export let panelElement
-
   const promotePawn = promotion => {
 	  __promotion = promotion.toUpperCase()
 	  __isPromoting = false
@@ -834,9 +840,6 @@
 	// Refreshes by dobuble flipping  
 	//setTimeout(() => flip(), 50)
 	//setTimeout(() => flip(), 60)
-
-	// __current = __current + 0
-	// return __current
 
 	// ... but is better to move current pointer
 	 const curcur = __current
@@ -854,7 +857,10 @@
 		__current = game.history().length
 //		doubleFlip()
 		setTimeout(() => historyElement.scrollTop = historyElement.scrollHeight, 0)
-		dispatch('update')
+		DEBUG && dispatch('update', Date.now())
+		dispatch('move', game.history()[game.history().length - 1])
+		emit('move', game.history()[game.history().length - 1])
+		examineStatus()
 	}
 	return response
   }
@@ -864,6 +870,9 @@
   $: isCheck = getCheck()
   $: isCheckMate = getCheckMate()
 
+  $: if (getCheck()) isCheck = true
+  $: if (getCheckMate()) isCheckMate = true
+  
   export const getCheck = () => game.isCheck
   export const getCheckMate = () => game.isCheckMate
 
@@ -896,7 +905,10 @@
 		__current = game.history().length
 		// doubleFlip()
 		setTimeout(() => historyElement.scrollTop = historyElement.scrollHeight, 0)
-		dispatch('update')
+		DEBUG && dispatch('update', Date.now())
+		dispatch('move', game.history()[game.history().length - 1])
+		emit('move', game.history()[game.history().length - 1])
+		examineStatus()
 	}
 
 	if (__imgSrc) {
@@ -919,6 +931,10 @@
 	  if (response) {
 		  setTimeout(() => __current = game.history().length, 0)
 		  // doubleFlip()
+		dispatch('undo', game.history().length)
+		emit('undo', game.history().length)
+		examineStatus()
+
 	  }
 	  return response
   }
@@ -955,8 +971,6 @@
   export const getResult = (n = 0) => game.headers('Result')
   $: result = getResult(__current)
 
-  export let turn
-  
   $: turn = game.getTurn(__current)
 
   export const canMoveFrom = sq => {
@@ -998,13 +1012,6 @@
 	}
 	return true
   }
-
-  export let __imgSrc = null	
-  export let __figureFrom = null
-  export let __figureTo = null	
-  export let __sqFrom = -1
-  export let __sqTo = -1
-  export let __promotion = null
 
   const setupImgs = [
 	  {figure: 'p', index: -10},
@@ -1120,18 +1127,6 @@
 	  }
   }
 
-    /*
-	export const put = (sq, figure) => {
-		if (!/[0pnbrqkPNBRQK]/.test(figure)) return null
-		sq = utils.sqNumber(sq)
-		const obj = fen2obj(fenCopy)
-		obj.fenArray[sq] = figure
-		obj.fenString = utils.array2fenString(obj.fenArray)
-		fenCopy = obj2fen(obj)
-	}
-	*/
-
-
   export let fenCopy = utils.defaultFen
 
   export const setTurn = t => {
@@ -1165,15 +1160,9 @@
   }
 
 ///////////////////////////////////////////////////////////////////////////////
+  const prevDefault = e => e.preventDefault()
 
-  onMount(() => {
-    // console.log(`Board mounted with version: ${game.version}`)
-	// setTimeout(() => window.board = document.querySelector('chess-board'), 0)
-    // setTimeout(() => setStatus('config'), 0)
-    // console.log(trashbin)
-   document.body.addEventListener('dragover', e => e.preventDefault()) 
-   document.body.addEventListener('drop', 
-     e => {
+  const dropOut = e => {
 		DEBUG && console.log("Dropping out of the board!!")
 		__sqFrom = -1
 		__sqTo = -1
@@ -1181,8 +1170,89 @@
 		__figureTo = null
 		__imgSrc ? __imgSrc.style.opacity = 1 : null
 		__imgSrc = null
-  	})
+  }
+
+  onDestroy(() => {
+	  document.body.removeEventListener('dragover', prevDefault)
+	  document.body.addEventListener('drop', dropOut)
   })
+  
+  onMount(() => {
+	game.reset(initialFen)
+    document.body.addEventListener('dragover', prevDefault) 
+    document.body.addEventListener('drop', dropOut)
+  })
+
+  afterUpdate(() => {
+	  emit('update', `Updated at ${new Date().toLocaleTimeString()}`)
+	  dispatch('update', `Updated at ${new Date().toLocaleTimeString()}`)
+  })
+
+  let eventHandlers = {
+	  'update': [],
+	  'move': [],
+	  'undo': [],
+	  'check': [],
+	  'checkmate': [],
+	  'stalemate': [],
+	  'in_fifty_moves_rule': [],
+	  'in_threefold_repetition': [],
+	  'insufficient_material': [],
+	  'in_draw': [],
+  }
+
+  const exclude = (a, n) => [...a.slice(0, n), ...a.slice(n + 1)]
+
+  export const on = (evName, handler) => {
+	  if (!(evName in eventHandlers)) return null
+	  if (!handler || handler.constructor.name !== 'Function') return null
+	  const now = Date.now()
+	  handler.timestamp = now
+	  eventHandlers[evName] = [...eventHandlers[evName], handler]
+	  // return (() => eventHandlers[evName] = exclude(eventHandlers[evName], eventHandlers[evName].length - 1))
+      return (() => {
+		  eventHandlers[evName] = eventHandlers[evName].filter(h => h.timestamp !== now)
+		  return eventHandlers[evName].length
+	  })     
+  }
+
+  const emit = (ev, detail = undefined) => {
+	  if (!ev in eventHandlers) return
+	  setTimeout(() => {
+		  eventHandlers[ev].forEach(h => h({type: ev, detail, timestamp: Date.now()}))
+	  }, 0)
+  }
+
+  const examineStatus = () => {
+	  if (game.isCheck && !game.isCheckMate) {
+		  emit('check', game.turn)
+		  dispatch('check', game.turn)
+	  }
+	  if (game.isCheckMate) {
+		  emit('checkmate', getResult())
+		  dispatch('checkmate', getResult())
+	  }
+	  if (game.isStaleMate) {
+		  emit('stalemate', getResult())
+		  dispatch('stalemate', getResult())
+	  }
+	  if (game.in_fifty_moves_rule) {
+		  emit('in_fifty_moves_rule', getResult())
+		  dispatch('in_fifty_moves_rule', getResult())
+	  }
+	  if (game.in_threefold_repetition) {
+		  emit('in_threefold_repetition', getResult())
+		  dispatch('in_threefold_repetition', getResult())
+	  }
+	  if (game.insufficient_material) {
+		  emit('insufficient_material', getResult())
+		  dispatch('insufficient_material', getResult())
+	  }
+	  if (game.in_draw) {
+		  emit('in_draw', getResult())
+		  dispatch('in_draw', getResult())
+	  }
+  }
 
 </script>
 
