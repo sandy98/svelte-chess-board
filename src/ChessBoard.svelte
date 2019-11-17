@@ -610,9 +610,9 @@
 
   const DEBUG = false
 
-  export const version = '0.17.1'
+  export const version = '0.17.2'
   export const utils = Chess.utils()
-  export const game = new Chess()	
+  export let game = new Chess()	
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
   export const backgrounds = [
 	  {name: 'Acqua', dark: '#56B6E2', light: '#DFDFDF'},
@@ -723,6 +723,11 @@
 	  return n
   }
   
+  export const setGame = newGame => {
+	  game = newGame
+	  __current = 0
+	  refresh()
+  }
 
   $: gameTitle = game.title
   $: position = game.positions[__current < 0 ? 0 : __current]
