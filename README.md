@@ -9,5 +9,6 @@
 
 Chess board is a stand-alone web component: `<chess-board>` tag
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNDUxMDg4NDgsMTY1MTE0ODE4OF19
+eyJoaXN0b3J5IjpbMTYxMDkxMDA5OSwtMTA0NTEwODg0OCwxNj
+UxMTQ4MTg4XX0=
 -->
