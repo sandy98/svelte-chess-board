@@ -10,6 +10,12 @@
 	<link rel='stylesheet' href='/global.css'>
 	<link rel='stylesheet' href='/chess-board.css'>
 
+	<style>
+		button {
+			cursor: pointer;
+		}
+	</style>
+
 	<script defer src='/chess-board.js'></script>
 </head>
 
@@ -27,6 +33,10 @@
 		<button id="btnConfig" onclick="board.config()">Configure Board</button>
 		&nbsp;
 		<button id="btnSetup" onclick="board.setup()">Setup Board</button>
+		&nbsp;
+		<button id="btnFlip" onclick="board.flip()">Flip Board</button>
+		&nbsp;
+		<button id="btnHidePanel" onclick="board.hidePanel = !board.hidePanel">Toggle Lateral Panel</button>
 		&nbsp;
 	</p>
 	<div style="display: flex; flex-direction: column; width: 100%; min-width: 100%; padding: 5px; align-items: center;">
@@ -53,6 +63,14 @@
 				  board.on('in_fifty_moves_rule', e => alert(`50 moves rule: ${e.detail}`))
 				  board.on('insufficient_material', e => alert(`Insufficient material: ${e.detail}`))
 				  board.on('in_draw', e => alert(`Draw: ${e.detail}`))
+				  board.on('flip', e => {
+					  if (e.detail) {
+						  document.querySelector('#btnFlip').innerText = 'Unflip Board'
+					  }
+					  else {
+						document.querySelector('#btnFlip').innerText = 'Flip Board'
+					  }
+				  })
 				  console.log(updev.toString())
 				  console.log(updev())
 				  console.log('Done!')

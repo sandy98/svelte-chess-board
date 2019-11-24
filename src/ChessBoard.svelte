@@ -51,7 +51,7 @@
   </div>
   <div 
     class="board-child board-panel" 
-	style="color: {__darkBg}; background: whitesmoke;"
+	style="color: {__darkBg}; background: whitesmoke; display: {hidePanel ? 'none': 'flex'};"
 	on:contextmenu="{contextMenu}"
 	on:dragover|preventDefault
 	on:drop|stopPropagation="{ev => {
@@ -67,7 +67,7 @@
 	  class="board-panel-child"
 	  style="display: {__status === 'PLAY' || __status === 'VIEW' || __status === 'ANALYZE' ? 'flex' : 'none'};"
 	>
-	  <div class="headers" style="color: {__darkBg};">
+	  <div title={getPgn(__current)} class="headers" style="color: {__darkBg};">
 	    <div class="header-row">
 			<span style="color: {__lightBg}; background: {__darkBg}; padding: 4px; border-radius: 4px;">
 			  {`${white} - ${black}`}
@@ -610,7 +610,7 @@
 
   const DEBUG = false
 
-  export const version = '0.17.2'
+  export const version = '0.17.4'
   export const utils = Chess.utils()
   export let game = new Chess()	
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
@@ -622,6 +622,7 @@
 	  {name: 'Maroon', dark: '#B2535B', light: '#FFF2D7'}
   ]
 
+  export let hidePanel = false
   export let initialStatus = 'ANALYZE'
   export let autoPromotion = false
   export let initialFen = Chess.defaultFen()
@@ -709,7 +710,10 @@
   export const getFlipped = () => __flipped
   export const flip = () => {
 	  __flipped = !__flipped
-		DEBUG && dispatch('update', Date.now())
+	    emit('update', Date.now())
+		dispatch('update', Date.now())
+	    emit('flip', __flipped)
+		dispatch('flip', __flipped)
   }
 
   export const getCurrent = () => __current
@@ -978,6 +982,8 @@
 
   $: turn = game.getTurn(__current)
 
+  export const getPgn = (n = getCurrent()) => game.pgn()
+
   export const canMoveFrom = sq => {
 	if (utils.isEmptyFigure(game.position[sq])) {
 		return false
@@ -1204,9 +1210,11 @@
 	  'in_threefold_repetition': [],
 	  'insufficient_material': [],
 	  'in_draw': [],
+	  'flip': []
   }
 
   const exclude = (a, n) => [...a.slice(0, n), ...a.slice(n + 1)]
+  // return (() => eventHandlers[evName] = exclude(eventHandlers[evName], eventHandlers[evName].length - 1))
 
   export const on = (evName, handler) => {
 	  if (!(evName in eventHandlers)) return null
@@ -1214,7 +1222,6 @@
 	  const now = Date.now()
 	  handler.timestamp = now
 	  eventHandlers[evName] = [...eventHandlers[evName], handler]
-	  // return (() => eventHandlers[evName] = exclude(eventHandlers[evName], eventHandlers[evName].length - 1))
       return (() => {
 		  eventHandlers[evName] = eventHandlers[evName].filter(h => h.timestamp !== now)
 		  return eventHandlers[evName].length
