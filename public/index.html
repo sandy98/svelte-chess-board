@@ -8,11 +8,15 @@
 
 	<link rel='icon' type='image/png' href='/favicon.png'>
 	<link rel='stylesheet' href='/global.css'>
-	<link rel='stylesheet' href='/chess-board.css'>
+	<!--<link rel='stylesheet' href='/chess-board.css'>-->
 
 	<style>
 		button {
 			cursor: pointer;
+		}
+
+		p {
+			margin-bottom: 10px;
 		}
 	</style>
 
@@ -20,10 +24,11 @@
 </head>
 
 <body>
-	<h3 style="color: steelblue; text-align: center;">Svelte Chess Board</h3>
-	<p style="margin-left: 2rem; color: silver;">
+	<p style="margin-left: 2rem; color: silver; text-align: center;">
+		<strong style="font-size: 12pt; color: steelblue; text-align: center;">Svelte Chess Board</strong>
 		<span>Version</span>&nbsp;&nbsp;&nbsp;<span id="version"></span>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	</p>
+	<div style="display: flex; flex-direction: row; justify-content: center; align-items: center; margin-left: 2rem;">
 		<button id="btnAnalyze" onclick="board.analyze()">Play</button>
 		&nbsp;
 		<button id="btnReset" onclick="board.reset()">Reset</button>
@@ -38,9 +43,35 @@
 		&nbsp;
 		<button id="btnHidePanel" onclick="board.hidePanel = !board.hidePanel">Toggle Lateral Panel</button>
 		&nbsp;
-	</p>
+	</div>
+	<div style="display: flex; flex-direction: row; justify-content: center; align-items: center; margin-left: 2rem;">
+		<button 
+		  id="btnPasteFen" 
+		>
+		  Paste Position
+		</button>
+		&nbsp;
+		<button 
+		  id="btnCopyFen" 
+		>
+		  Copy Position to Clipboard
+		</button>
+		&nbsp;
+		<button 
+		  id="btnPastePgn" 
+		>
+		  Paste PGN data
+		</button>
+		&nbsp;
+		<button 
+		  id="btnCopyPgn" 
+		>
+		  Copy game PGN to Clipboard
+		</button>
+		&nbsp;
+	</div>	
 	<div style="display: flex; flex-direction: column; width: 100%; min-width: 100%; padding: 5px; align-items: center;">
-		<chess-board id="bd1" onupdete="console.log('UPDATED');"/>
+		<chess-board id="bd1" onupdate="console.log('UPDATED');"/>
 	</div>
 
 	<script>
@@ -83,6 +114,32 @@
 			}
 		}
 		setTimeout(init, 100)
+
+		var pasteFen = () => {
+			  console.log('Trying to paste position...'); 
+			  board.pasteFen()
+		}
+
+		var copyFen = () => {
+			  console.log('Trying to copy position...'); 
+			  board.copyFen()
+		}
+
+		var pastePgn = () => {
+			  console.log('Trying to paste PGN data...'); 
+			  board.pastePgn()
+		}
+
+		var copyPgn = () => {
+			  console.log('Trying to copy PGN data...'); 
+			  board.copyPgn()
+		}
+
+		document.querySelector('#btnPasteFen').addEventListener('click', pasteFen)
+		document.querySelector('#btnCopyFen').addEventListener('click', copyFen)
+		document.querySelector('#btnPastePgn').addEventListener('click', pastePgn)
+		document.querySelector('#btnCopyPgn').addEventListener('click', copyPgn)
+
 	</script>
 </body>
 </html>

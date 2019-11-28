@@ -67,6 +67,10 @@
 	  class="board-panel-child"
 	  style="display: {__status === 'PLAY' || __status === 'VIEW' || __status === 'ANALYZE' ? 'flex' : 'none'};"
 	>
+	  <div class="hidden-inputs" bind:this={divCP}>
+	    <input type="text" bind:this={txtCPFen} />
+	    <input type="text" bind:this={txtCPPgn} />
+	  </div> 
 	  <div title={getPgn(__current)} class="headers" style="color: {__darkBg};">
 	    <div class="header-row">
 			<span style="color: {__lightBg}; background: {__darkBg}; padding: 4px; border-radius: 4px;">
@@ -361,6 +365,10 @@
 	background: #888;
 	}
 
+	.hidden-inputs {
+		display: none;
+	}
+
 	.pad5 {
 		padding: 5px;
 	}
@@ -608,9 +616,9 @@
   import sets from 'chess-sets'
   import { trashbin } from '../assets/trashbin.json'
 
-  const DEBUG = false
+  const DEBUG = true
 
-  export const version = '0.17.5'
+  export const version = '0.17.7'
   export const utils = Chess.utils()
   export let game = new Chess()	
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
@@ -658,6 +666,9 @@
   let boardElement 
   let historyElement
   let panelElement
+  let divCP
+  let txtCPFen
+  let txtCPPgn
   let __imgSrc = null	
   let __figureFrom = null
   let __figureTo = null	
@@ -858,6 +869,71 @@
 
   }
   
+  export const pasteFen = () => {
+	  try {
+		  navigator.clipboard.readText()
+		  .then(fen => {
+			  if (utils.validateFen(fen).valid) {
+				  DEBUG && console.log('Successfully updated game to ' + fen)
+				  reset(fen)
+			  } else {
+				  DEBUG && console.log(`${fen} is not a valid FEN position`)
+			  }
+		  })
+	  } catch(e) {
+		  DEBUG && console.log('CLIPBOARD ERROR:' + e.message)
+	  }
+  }
+
+  export const copyFen = () => {
+	  try {
+		  navigator.clipboard.writeText(game.fens()[__current])
+		  .then(() => DEBUG && console.log('Clipboard successfully set.'), 
+		        () => DEBUG && console.log('Something went very wrong and couldn\'t update the clipboard.'))
+	  } catch(e) {
+		  DEBUG && console.log(`Error copying FEN to clipboard: ${e.message}`)
+	  }
+  }
+  
+  export const pastePgn = () => {
+	  try {
+		  navigator.clipboard.readText()
+		  .then(pgn => {
+			  if (load_pgn(pgn)) {
+				  DEBUG && console.log('Successfully updated game with clipboard PGN data')
+			  } else {
+				  DEBUG && console.log(`Provided PGN could not be loaded`)
+			  }
+		  })
+	  } catch(e) {
+		  DEBUG && console.log('CLIPBOARD ERROR:' + e.message)
+		  try {
+			  txtCPPgn.focus()
+			  txtCPPgn.select()
+			  document.execCommand('paste')
+			  setTimeout(() => {
+				if (load_pgn(txtCPPgn.value)) {
+					DEBUG && console.log('Successfully updated game with clipboard PGN data via "document.execCommand"')
+				} else {
+					DEBUG && console.log(`Provided PGN could not be loaded by "document.execCommand", either`)
+				}
+			  }, 0)
+		  } catch(e) {
+			  DEBUG && console.log('document.exeCommand also fails: ' + e.message)
+		  }
+	  }
+  }
+ 
+  export const copyPgn = () => {
+	  try {
+		  navigator.clipboard.writeText(game.pgn())
+		  .then(() => DEBUG && console.log('Clipboard successfully set.'), 
+		        () => DEBUG && console.log('Something went very wrong and couldn\'t update the clipboard.'))
+	  } catch(e) {
+		  DEBUG && console.log(`Error copying PGN to clipboard: ${e.message}`)
+	  }
+  }
+
 
 
   export const remote_move = (...args) => {
