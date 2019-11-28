@@ -618,7 +618,7 @@
 
   const DEBUG = true
 
-  export const version = '0.17.8'
+  export const version = '0.17.9'
   export const utils = Chess.utils()
   export let game = new Chess()	
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']

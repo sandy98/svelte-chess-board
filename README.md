@@ -1,6 +1,6 @@
 # Chess Board
 
-### Version 0.17.8
+### Version 0.17.9
   
 
 ## Powered by Svelte
