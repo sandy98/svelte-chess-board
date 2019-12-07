@@ -618,7 +618,7 @@
 
   const DEBUG = true
 
-  export const version = '0.18.0'
+  export const version = '0.18.1'
   export const utils = Chess.utils()
   export let game = new Chess()	
   export const states = ['PLAY', 'VIEW', 'ANALYZE', 'CONFIG', 'SETUP']
@@ -676,8 +676,7 @@
   let __sqTo = -1
   let __promotion = null
 
-
-
+  
   $: currentRows = __flipped ? flipped_arr : unflipped_arr
   export const getCurrentRows = () => currentRows
   export const getStatus = () => __status
@@ -728,6 +727,7 @@
   }
 
   export const getCurrent = () => __current
+  
   export const goto = n => {
 	  if (__status !== 'ANALYZE' && __status !== 'VIEW') return -1
 	  n = n < 0 ? 0 : n > game.history().length ? game.history().length : n
